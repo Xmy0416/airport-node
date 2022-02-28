@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style type="text/css">    
+        body{    
+             background-image: url(public/images/背景.jpg);    
+              background-size:100% 300% ; 
+              background-attachment: fixed"    
+          }    
+        </style> 
+</head>
+
+<body>
+    <table border="1">
+        <thead>
+            <td width=10%>航班号</td>
+            <td width=8%>目的地</td>
+            <td width=8%>始发地</td>
+            <td width=8%>经停</td>
+            <td width=10%>预计离港时间</td>
+            <td width=10%>预计到达时间</td>
+            <td width=10%>实际到达时间</td>
+            <td width=10%>航班状态</td>
+            <td width=8%>行李分拣台</td>
+            <td width=8%>值机柜台</td>
+        </thead>
+        <tbody id="main">
+
+        </tbody>
+    </table>
+    <script>
+
+        $.ajax({
+            url: "http://localhost:3000/air",
+            type: "get",
+            data: {},
+            success: function (data) {
+                console.log(data);
+                data = JSON.parse(JSON.stringify(data))
+                let html = '';
+                for (var i = 0; i < data.length; i++) {
+                    html += '<tr>' +
+                        '<td>' + data[i].flightno + '</td>' +
+                        '<td>' + data[i].departure + '</td>' +
+                        '<td>' + data[i].destination + '</td>' +
+                        '<td>' + data[i].stopover + '</td>' +
+                        '<td>' + data[i].plannedDeparturetime + '</td>' +
+                        '<td>' + data[i].plannedArrivaltime + '</td>' +
+                        '<td>' + data[i].actualArrivaltime + '</td>' +
+                        '<td>' + data[i].flightstatus + '</td>' +
+                        '<td>' + data[i].Luggagesorting + '</td>' +
+                        '<td>' + data[i].CheckinCounter + '</td>' +
+                        '</tr>';
+                }
+                let tbody = document.getElementById("main")
+
+                tbody.innerHTML=html
+            }
+        });
+    </script>
+</body>
+
+</html>

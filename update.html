@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script src="../js/getUrl.js" type="text/javascript"></script>
+
+    <style type="text/css">
+        body {
+            background-image: url(public/images/背景.jpg);
+            background-size: 500% 500%;
+            background-attachment: fixed"    
+
+        }
+    </style>
+
+</head>
+
+<body>
+    <form>
+        请输入航班号:<input type="text" id="fno">
+        <input id="button" type="button" value="查询" onclick="sele();">
+    </form>
+    <form id="updata">
+        <table border="1">
+            <thead>
+                <td width=10%>航班号</td>
+                <td width=8%>目的地</td>
+                <td width=8%>始发地</td>
+                <td width=8%>经停</td>
+                <td width=10%>预计离港时间</td>
+                <td width=10%>预计到达时间</td>
+                <td width=10%>实际到达时间</td>
+                <td width=10%>航班状态</td>
+                <td width=8%>行李分拣台</td>
+                <td width=8%>值机柜台</td>
+            </thead>
+            <tbody id="main">
+
+            </tbody>
+            <input id="configData" type="button" value="修改">
+            <input type="button" id="cancelConfig" value="取消" style="margin-left: 10px;display: none;">
+        </table>
+    </form>
+    <script>
+        let fno = null;
+        //点击函数 async await是改成同步代码 异步同步问题 百度XD
+        async function sele() {
+            fno = $('#fno').val();
+            render(await getData(fno))
+        }
+        //封装一个获取数据的函数 将获取的值返回
+        async function getData(fno) {
+            let getData = null
+            await $.ajax({
+                url: "http://localhost:3000/air/" + fno,
+                type: "get",
+                data: {},
+                success: function (data) {
+                    data = JSON.parse(JSON.stringify(data))
+                    getData = data;
+                }
+            });
+            alert(getData)
+            return getData
+        }
+        //封装一个渲染页面的函数  因为有多处需要同样的代码所以封装一个减少代码量
+        function render(data) {
+            let html = '';
+            data.plannedDeparturetime = timeFormatter(data.plannedDeparturetime);
+            data.plannedArrivaltime = timeFormatter(data.plannedArrivaltime);
+            data.actualArrivaltime = timeFormatter(data.actualArrivaltime);
+            html += `<tr>
+                        <td> ${data.flightno} </td>
+                        <td> ${data.departure} </td>
+                        <td> ${data.destination} </td>
+                        <td> ${data.stopover} </td>
+                        <td> ${data.plannedDeparturetime} </td>
+                        <td> ${data.plannedArrivaltime} </td>
+                        <td> ${data.actualArrivaltime} </td>
+                        <td> ${data.flightstatus} </td>
+                        <td> ${data.Luggagesorting} </td>
+                        <td> ${data.CheckinCounter} </td>
+                        </tr>`;
+            let tbody = document.getElementById("main")
+            tbody.innerHTML = html
+        }
+        function timeFormatter(value) {
+            var da = value.replace("T"," ").replace(".000Z","");
+            return da;
+        }
+        // jq的绑定点击事件的方法   
+        $("#configData").click(async (e) => {
+            //判断是是否是修改中的状态
+            if (e.target.value == "确定修改") {
+                e.target.value = "修改"
+                $('#cancelConfig').css('display', "none");
+
+                //或者id为updata的form表单的内容
+                let formArray = $("#updata").serializeArray();
+                let dataObj = {};
+                for (let item of formArray) {
+                    dataObj[item.name] = item.value;
+                }
+                await $.ajax({
+                    url: "http://localhost:3000/air",
+                    type: "POST", //默认get
+                    data: dataObj, //格式{key:value}
+                    success: function (response) { //请求成功回调
+                        render(response.filter((item) => {
+                            return item.flightno == fno;
+                        })[0])
+
+                    }
+                })
+
+            } else {
+                $('#cancelConfig').css('display', "inline-block")
+                e.target.value = "确定修改"
+                let data = await getData(fno);
+                let html = ''
+                data.plannedDeparturetime = timeFormatter(data.plannedDeparturetime);
+                data.plannedArrivaltime = timeFormatter(data.plannedArrivaltime);
+                data.actualArrivaltime = timeFormatter(data.actualArrivaltime);
+                html += `<tr>
+                        <td> <input type="text" name="flightno" value="${data.flightno}"> </td>
+                        <td> <input type="text" name="departure" value="${data.departure}"> </td>
+                        <td> <input type="text" name="destination" value="${data.destination}"> </td>
+                        <td> <input type="text" name="stopover" value="${data.stopover}"> </td>
+                        <td> <input type="text" name="plannedDeparturetime" value="${data.plannedDeparturetime}"> </td>
+                        <td>  <input type="text" name="plannedArrivaltime" value="${data.plannedArrivaltime}"> </td>
+                        <td>  <input type="text" name="actualArrivaltime" value="${data.actualArrivaltime}"> </td>
+                        <td> <input type="text" name="flightstatus" value="${data.flightstatus}"> </td>
+                        <td> <input type="text" name="Luggagesorting" value="${data.Luggagesorting}"> </td>
+                        <td> <input type="text" name="CheckinCounter" value="${data.CheckinCounter}"> </td>
+                        </tr>`;
+                let tbody = document.getElementById("main")
+                tbody.innerHTML = html
+            }
+        })
+        //取消按钮点击事件
+        $("#cancelConfig").click(async (e) => {
+            $('#configData').val('修改')
+            $('#cancelConfig').css('display', "none")
+            render(await getData(fno))
+        })
+    </script>
+</body>
+
+</html>
